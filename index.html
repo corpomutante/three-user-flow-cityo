@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cityo — User Flows</title>
+<style>
+  @font-face{font-family:"Unica77";src:url("fonts/Unica77LLCyr-Regular.otf") format("opentype");font-weight:400;font-style:normal;font-display:swap;}
+  @font-face{font-family:"Unica77";src:url("fonts/Unica77LLCyr-Medium.otf") format("opentype");font-weight:500;font-style:normal;font-display:swap;}
+  @font-face{font-family:"Unica77";src:url("fonts/Unica77LLCyr-Bold.otf") format("opentype");font-weight:700;font-style:normal;font-display:swap;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:#fff;font-family:"Unica77",-apple-system,BlinkMacSystemFont,sans-serif;}
+  a{color:#2ECC5B;}
+  a:hover{color:#23A548;}
+  .root{background:#fff;display:flex;align-items:center;justify-content:flex-start;}
+  .carousel{position:relative;padding-left:40px;}
+  .flow-header{text-align:left;margin-bottom:20px;}
+  .logo{height:40px;margin:0 0 16px 0;padding-top:8px;display:block;}
+  .flow-title{font-size:20px;font-weight:700;color:#455543;margin:0;line-height:1.2;white-space:pre-line;}
+  .flow-chain{display:flex;flex-direction:column;gap:12px;align-items:flex-start;transition:opacity .5s ease-in-out;}
+  .flow-chain.fading{opacity:0;}
+  .flow-step{display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
+  .flow-step .pill-label,.flow-step .step-pill{opacity:0;transition:opacity .45s ease-in-out;}
+  .flow-step.lb .pill-label{opacity:1;}
+  .flow-step.pl .step-pill{opacity:1;}
+  .pill-label{font-size:17px;font-weight:700;color:#455543;margin:0;white-space:nowrap;}
+  .step-pill{display:inline-flex;align-items:center;justify-content:center;height:27px;padding:2px 16px 0;border-radius:20px;font-size:16px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;background:#4CCF67;color:#fff;margin:0;}
+  .pagination{display:flex;gap:8px;justify-content:flex-start;margin-top:24px;align-items:center;}
+  .pagination-dot{width:6px;height:6px;border-radius:999px;background:#B8EBC4;cursor:pointer;transition:width .3s ease,background .3s ease;flex:0 0 auto;border:0;padding:0;}
+  .pagination-dot.active{width:26px;background:#2ECC5B;}
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="carousel">
+    <div class="flow-header">
+      <img class="logo" src="images/logo-cityo.png" alt="Cityo logo">
+      <h2 class="flow-title" id="flowTitle"></h2>
+    </div>
+    <div class="flow-chain" id="chain"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<script>
+const FLOWS = [
+  { title: "Flow 1: \nFind the right centre", steps: [
+    { number: 1, label: "Homepage", pill: "Discover" },
+    { number: 2, label: "Find a centre", pill: "Explore" },
+    { number: 3, label: "Centre information", pill: "Compare" },
+    { number: 4, label: "Select centre", pill: "Choose" },
+    { number: 5, label: "Visit / Contact", pill: "Act" }
+  ]},
+  { title: "Flow 2:\nContract storage online", steps: [
+    { number: 1, label: "Storage service", pill: "Discover" },
+    { number: 2, label: "Size / benefits / price", pill: "Understand" },
+    { number: 3, label: "Centre + storage option", pill: "Choose" },
+    { number: 4, label: "Enter your information", pill: "Details" },
+    { number: 5, label: "Complete payment", pill: "Act" }
+  ]},
+  { title: "Flow 3: \nCalculate the space", steps: [
+    { number: 1, label: "How much space do I need?", pill: "Uncertain" },
+    { number: 2, label: "Use the space calculator", pill: "Calculate" },
+    { number: 3, label: "Recommended size", pill: "Understand" },
+    { number: 4, label: "View suitable storage", pill: "Explore" },
+    { number: 5, label: "Contract online", pill: "Convert" }
+  ]}
+];
+
+const GAP = 450, START = 700, HOLD = 1600, FADE = 700;
+const titleEl = document.getElementById('flowTitle');
+const chainEl = document.getElementById('chain');
+const pagEl = document.getElementById('pagination');
+let current = 0, timers = [];
+
+function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+function at(ms, fn){ timers.push(setTimeout(fn, ms)); }
+
+function renderPagination(){
+  pagEl.innerHTML = '';
+  FLOWS.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'pagination-dot' + (i === current ? ' active' : '');
+    dot.setAttribute('aria-label', 'Go to flow ' + (i + 1));
+    dot.addEventListener('click', () => { current = i; run(); });
+    pagEl.appendChild(dot);
+  });
+}
+
+function run(){
+  clearTimers();
+  const flow = FLOWS[current];
+  titleEl.textContent = flow.title;
+  chainEl.classList.remove('fading');
+  chainEl.innerHTML = '';
+  renderPagination();
+
+  const stepEls = flow.steps.map(s => {
+    const step = document.createElement('div');
+    step.className = 'flow-step';
+    const label = document.createElement('div');
+    label.className = 'pill-label';
+    label.textContent = s.number + '. ' + s.label;
+    const pill = document.createElement('div');
+    pill.className = 'step-pill';
+    pill.textContent = s.pill;
+    step.append(label, pill);
+    chainEl.appendChild(step);
+    return step;
+  });
+
+  stepEls.forEach((el, i) => {
+    at(START + (i * 2 + 1) * GAP, () => el.classList.add('lb'));
+    at(START + (i * 2 + 2) * GAP, () => el.classList.add('pl'));
+  });
+
+  const holdEnd = START + stepEls.length * 2 * GAP + HOLD;
+  at(holdEnd, () => chainEl.classList.add('fading'));
+  at(holdEnd + FADE, () => { current = (current + 1) % FLOWS.length; run(); });
+}
+
+run();
+</script>
+</body>
+</html>
